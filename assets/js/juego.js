@@ -6,7 +6,7 @@
  */
 
 //! Funcion anonima autoejecutable
-(() => {
+const miModulo =(() => {
     'use strict'
 
 
@@ -27,16 +27,23 @@
 
 
     const puntosHTML = document.querySelectorAll('small'),
-        divCartasJugador = document.querySelector('#jugador-cartas'),
-        divCartasComputadora = document.querySelector('#computadora-cartas');
+        divCartasJugadores = document.querySelectorAll('.divCartas');
 
 
     const inicializarJuego = (numJugadores = 2) => {
         deck = crearDeck();
 
+        puntosJugadores = []; 
         for (let i = 0; i < numJugadores; i++) {
             puntosJugadores.push(0);
         }
+
+        puntosHTML.forEach( elem => elem.innerText = 0 );
+
+        divCartasJugadores.forEach(elem => elem.innerHTML = '');
+
+        btnDetener.disabled = false;
+        btnPedir.disabled = false;
     }
 
 
@@ -82,30 +89,39 @@
 
     }
 
-    const acumularPuntos = () => {
-        puntosComputadora = puntosComputadora + valorCarta(carta);
-        puntosHTML[1].innerText = puntosComputadora;
+    //Turno: 0 = primer jugador y el ultimo sera la computadora
+    const acumularPuntos = (carta, turno) => {
+        puntosJugadores[turno] = puntosJugadores[turno] + valorCarta(carta);
+        puntosHTML[turno].innerText = puntosJugadores[turno];
+        return puntosJugadores[turno];
+    }
+
+    const crearCarta = (carta, turno) => {
+        const imgCarta = document.createElement('img');
+        imgCarta.src = `assets/cartas/${carta}.png`;
+        imgCarta.classList.add('carta');
+        divCartasJugadores[turno].append(imgCarta);
     }
 
     //turno de la computadora
     const turnoComputadora = (puntosMinimos) => {
+        let puntosComputadora = 0;
         do {
             const carta = pedirCarta();
+            puntosComputadora = acumularPuntos(carta, puntosJugadores.length - 1);
 
+            crearCarta(carta, puntosJugadores.length - 1);
 
-
-
-            const imgCarta = document.createElement('img');
-            imgCarta.src = `assets/cartas/${carta}.png`;
-            imgCarta.classList.add('carta');
-
-            divCartasComputadora.append(imgCarta);
-
-            if (puntosMinimos > 21) {
-                break;
-            }
 
         } while ((puntosComputadora < puntosMinimos) && (puntosMinimos <= 21));
+
+        determinarGanador();
+
+    }
+
+    const determinarGanador = () => {
+
+        const [puntosMinimos, puntosComputadora] = puntosJugadores;
 
         setTimeout(() => {
             if (puntosComputadora === puntosMinimos) {
@@ -116,25 +132,16 @@
                 alert('Jugador Gana!');
             }
         }, 10);
-
-
     }
-
 
     //Eventos
     btnPedir.addEventListener('click', () => {
         const carta = pedirCarta();
 
-        puntosJugador = puntosJugador + valorCarta(carta);
-        puntosHTML[0].innerText = puntosJugador;
+        const puntosJugador = acumularPuntos(carta, 0);
 
+        crearCarta(carta, 0);
 
-        //<img class="carta" src="assets/cartas/2C.png"> 
-        const imgCarta = document.createElement('img');
-        imgCarta.src = `assets/cartas/${carta}.png`;
-        imgCarta.classList.add('carta');
-
-        divCartasJugador.append(imgCarta);
 
         if (puntosJugador > 21) {
             console.warn('Lo siento mucho, perdiste');
@@ -154,31 +161,20 @@
     btnDetener.addEventListener('click', () => {
         btnDetener.disabled = true;
         btnPedir.disabled = true;
-
-        turnoComputadora(puntosJugador);
+        
+        
+        turnoComputadora(puntosJugadores[0]);
     });
 
 
     btnNuevo.addEventListener('click', () => {
 
-        console.clear();
         inicializarJuego();
-        // deck = [];
-        // deck = crearDeck();
 
-        puntosJugador = 0;
-        puntosComputadora = 0;
-
-        puntosHTML[0].innerText = 0;
-        puntosHTML[1].innerText = 0;
-
-        divCartasComputadora.innerHTML = '';
-        divCartasJugador.innerHTML = '';
-
-        btnDetener.disabled = false;
-        btnPedir.disabled = false;
 
     });
+
+    return {
+        nuevoJuego: inicializarJuego
+    };
 })();
-
-
